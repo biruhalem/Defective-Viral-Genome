@@ -8,16 +8,16 @@
 #SBATCH --time=1-00:00:00                                 #- time requested
 #SBATCH --mem=64G                                        #- Memory/node (or mem-per-cpu)
 #SBATCH --export==ALL
-#SBATCH --chdir /mforge/research/labs/molecmed/cattaneor/m243773/biruh/Fastq/SSPE/sgDI-tector                 #- Also -D
+#SBATCH --chdir SSPE/sgDI-tector                 #- Also -D
 #SBATCH --output logs/%x.%N.%j.stdout
 #SBATCH --error  logs/%x.%N.%j.stderr
 #SBATCH --signal=USR1@60                                #- Notify <signal>@<time>
 
-DI=/mforge/research/labs/molecmed/cattaneor/m243773/biruh/Fastq/SSPE/sgDI-tector
-Input_Data=/mforge/research/labs/molecmed/cattaneor/m243773/biruh/Fastq/SSPE/SSPE_fastp/fastp_UBS_R1.fastq
-Host_Ref=/mforge/research/labs/molecmed/cattaneor/m243773/biruh/Fastq/SSPE/SSPE_fastp/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna
-Virus_Ref=/mforge/research/labs/molecmed/cattaneor/m243773/biruh/Fastq/SSPE/SSPE_fastp/virus_ref/MVSSPE_ancestor.fa.fasta
-OUTDIR=/mforge/research/labs/molecmed/cattaneor/m243773/biruh/Fastq/SSPE/sgDI-tector/DI_results
+DI=SSPE/sgDI-tector
+Input_Data=SSPE/SSPE_fastp/fastp_UBS_R1.fastq
+Host_Ref=SSPE/SSPE_fastp/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna
+Virus_Ref=SSPE/SSPE_fastp/virus_ref/MVSSPE_ancestor.fa.fasta
+OUTDIR=SSPE/sgDI-tector/DI_results
 
 module load python/3.10.7
 module load bwa/0.7.17
