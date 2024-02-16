@@ -1,0 +1,135 @@
+#!/bin/bash
+#SBATCH --mail-user=beyene.biruhalem@mayo.edu
+#SBATCH --mail-type=END,FAIL,TIME_LIMIT_50
+#SBATCH --job-name=di_test                              #- Also
+#SBATCH --partition=cpu-med                           #- Queue also
+#SBATCH --nodes=1                                       #- Number of nodes (optional)
+#SBATCH --tasks=1                                       #- --ntasks number of cores
+#SBATCH --time=1-00:00:00                                 #- time requested
+#SBATCH --mem=32G                                        #- Memory/node (or mem-per-cpu)
+#SBATCH --export==ALL
+#SBATCH --chdir /mforge/research/labs/molecmed/cattaneor/m243773/biruh/Fastq/SSPE/sgDI-tector                 #- Also -D
+#SBATCH --output logs/%x.%N.%j.stdout
+#SBATCH --error  logs/%x.%N.%j.stderr
+#SBATCH --signal=USR1@60                                #- Notify <signal>@<time>
+
+DI=/mforge/research/labs/molecmed/cattaneor/m243773/biruh/Fastq/SSPE/sgDI-tector
+Input_Data=/mforge/research/labs/molecmed/cattaneor/m243773/biruh/Fastq/SSPE/PL.FCHHWKYBBXY_L4_R1_ICTCACCAA-CTAGGCAA.fastq.gz
+Host_Ref=/mforge/research/labs/molecmed/cattaneor/m243773/biruh/Fastq/SSPE/SSPE_fastp/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna
+Virus_Ref=/mforge/research/labs/molecmed/cattaneor/m243773/biruh/Fastq/SSPE/SSPE_fastp/MVSSPE_ancestor.fasta
+OUTDIR=/mforge/research/labs/molecmed/cattaneor/m243773/biruh/Fastq/SSPE/sgDI-tector/di_test
+
+#index both the viral and host ref genome using bwa index 
+
+module load bwa/0.7.17
+module load samtools/1.16
+
+python $DI/DI-tector_06.py -g $Host_Ref -o $OUTDIR -p 1 -x 16 $Virus_Ref $Input_Data
+
+
+##test 
+
+#!/bin/bash
+#SBATCH --mail-user=beyene.biruhalem@mayo.edu
+#SBATCH --mail-type=END,FAIL,TIME_LIMIT_50
+#SBATCH --job-name=di_test                              #- Also
+#SBATCH --partition=cpu-med                           #- Queue also
+#SBATCH --nodes=1                                       #- Number of nodes (optional)
+#SBATCH --tasks=1                                       #- --ntasks number of cores
+#SBATCH --time=1-00:00:00                                 #- time requested
+#SBATCH --mem=32G                                        #- Memory/node (or mem-per-cpu)
+#SBATCH --export==ALL
+#SBATCH --chdir /mforge/research/labs/molecmed/cattaneor/m243773/biruh/Fastq/SSPE/sgDI-tector                 #- Also -D
+#SBATCH --output logs/%x.%N.%j.stdout
+#SBATCH --error  logs/%x.%N.%j.stderr
+#SBATCH --signal=USR1@60                                #- Notify <signal>@<time>
+
+DI=/mforge/research/labs/molecmed/cattaneor/m243773/biruh/Fastq/SSPE/sgDI-tector
+Input_Data=/mforge/research/labs/molecmed/cattaneor/m243773/biruh/Fastq/SSPE/sgDI-tector/input_examples
+Host_Ref=/mforge/research/labs/molecmed/cattaneor/m243773/biruh/Fastq/SSPE/SSPE_fastp/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna
+Virus_Ref=/mforge/research/labs/molecmed/cattaneor/m243773/biruh/Fastq/SSPE/sgDI-tector/input_examples
+OUTDIR=/mforge/research/labs/molecmed/cattaneor/m243773/biruh/Fastq/SSPE/sgDI-tector/input_examples
+
+#index both the viral and host ref genome using bwa index 
+
+module load bwa/0.7.17
+module load samtools/1.16
+
+python $DI/DI-tector_06.py -g $Host_Ref -o $OUTDIR -t sars -p 1 -x 16 -k -d $Virus_Ref/NC_045512.2.fasta $Input_Data/SARS2_subsampling.fastq.gz
+
+
+#NB with the option of -d, it seems the job is failed as to the report due to an error "DI-tector_06.py", line 723, in <module>
+#    if args.DVG_sequences and prev_6.isnumeric():
+#AttributeError: 'int' object has no attribute 'isnumeric'
+#But all the fasta sequences of the DVG are found in .fasta.fa file. All the other results are also there as expected 
+
+
+
+############################################
+#Organizing the count.txt output data from DI-tector
+###############################################
+#!/bin/bash
+
+# Specify the pattern to match the files
+file_pattern="*counts.txt"
+
+# Get a list of files matching the pattern
+file_list=($file_pattern)
+
+# Output merged file
+merged_file="merged_output.txt"
+
+# Loop through each file and apply the script
+for filename in "${file_list[@]}"; do
+    output_filename="${filename%.txt}_filtered.txt"  # Output filename based on the original filename
+
+    cat "$filename" | grep -vE '^[[:space:]]*$|=' | awk 'NR==1 || (!/^=/ && !/^DVG'\''s/)' | awk 'BEGIN {OFS=FS="\t"} {print $1, $2, $3"_"$4, $5, $6, $7, $8, $9, $10}' | sed -e 's/ //g' > "$output_filename"
+
+    echo "Processed $filename. Filtered content saved to $output_filename"
+done
+
+# Specify the pattern to match the filtered files
+filtered_pattern="*filtered.txt"
+
+# Output merged file
+echo -e "DVG'stype\tLength\tBP_Pos_RI_Pos\tDelta_Positions\tRef\tCounts\t%_to_Virus" > "$merged_file"
+
+# Loop through each filtered file and append based on BP_Pos_RI_Pos
+for filtered_file in $filtered_pattern; do
+    # Extract filename without extension
+    filename=$(basename "$filtered_file" .txt)
+
+    # Remove spaces between characters in the DVG's column
+    sed -e 's/ //g' "$filtered_file" > "temp_filtered.txt"
+
+    # Append lines based on BP_Pos_RI_Pos
+    awk -v filename="$filename" 'NR>1 {print $1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7"\t"filename}' "temp_filtered.txt" >> "$merged_file"
+
+    # Remove the temporary file
+    rm "temp_filtered.txt"
+done
+
+echo "Merged content saved to $merged_file"
+
+
+
+#######################
+#Organizing the seqence data
+########################
+#1.grep the needed DVG ID 
+
+cat PL2_DI_fasta.fa | grep "DVG_336_" > name.list
+
+#2. remove the > sign from the list in name.list file
+
+#3. extract the sequnces based on the spesific ID in the file using seqtk
+
+module load seqtk 
+
+seqtk subseq PL2_DI_fasta.fa name.list > DVG_336_PL.fa
+
+
+
+
+
+
