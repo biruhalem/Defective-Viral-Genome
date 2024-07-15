@@ -1,5 +1,5 @@
 ---
-title: "cbDVG downstream analysis"
+## title: "cbDVG downstream analysis"
 author: "Dr Biruhalem"
 date: "2023-12-11"
 output: html_document
@@ -20,17 +20,21 @@ library(ggsignif)
 library(gridExtra)
 ```
 
-
-#Loading data
+#-------------
+## Loading data
+#-------------
 
 ```{r}
-#importing raw data 
 
 dvg <- read.csv("D:/SSPE_raw.fatsq_files/DI-tector/merged_output_V2_all.csv")  # merged_output.txt was saved as merged_output_V2_all.csv and loaded 
 
 head(dvg)
 
 ```
+
+#---------------------------
+## Sumerizing the DVG counts
+#---------------------------
 
 #Sumerizing the counts of forward and reverse strand to total_count. For a given DVG in each sample, if the DVG has a swich in BP_pos and RI_pos in the same sample, then add the Count values of both to total_count. Else keep the Count value as total_count
 
