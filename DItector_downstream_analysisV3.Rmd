@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## loading R packages libraries 
+## loading R package libraries 
 
 ```{r}
 library(tidyverse)
