@@ -1,5 +1,5 @@
 #---------------------------------------------------------------------------------------
-# Spesifications for slurm scheduler on High performance computer cluster (HPC cluster) 
+## Spesifications for slurm scheduler on High performance computer cluster (HPC cluster) 
 #---------------------------------------------------------------------------------------
 
 #!/bin/bash
@@ -18,7 +18,7 @@
 #SBATCH --signal=USR1@60                                #- Notify <signal>@<time>
 
 #----------------------------------------
-# Defining the directories and file paths
+## Defining the directories and file paths
 #----------------------------------------
 
 DI=SSPE/sgDI-tector  # This direcory contains the DI-tector_06.py program from Beauclair et al., 2018 (DOI: 10.1261/rna.066910.118).
@@ -28,7 +28,7 @@ Virus_Ref=SSPE/SSPE_fastp/virus_ref/MVSSPE_ancestor.fa.fasta  #Measles virus ref
 OUTDIR=SSPE/sgDI-tector/DI_results #Output directory for the analysis 
 
 #-----------------------------------
-# loading modules using slurm script
+## loading modules using slurm script
 #-----------------------------------
 
 module load python/3.10.7
@@ -36,7 +36,7 @@ module load bwa/0.7.17
 module load samtools/1.16
 
 #---------------------
-# DI-tector parameters 
+## DI-tector parameters 
 #---------------------
 
 python $DI/DI-tector_06.py -g $Host_Ref -o $OUTDIR -t UBS_2_DI -p 1 -x 16 -k -d $Virus_Ref $Input_Data
