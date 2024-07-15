@@ -1,5 +1,5 @@
 ---
-## title: "cbDVG downstream analysis"
+title: "cbDVG downstream analysis"
 author: "Dr Biruhalem"
 date: "2023-12-11"
 output: html_document
@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#loading R packages libraries 
+## loading R packages libraries 
 
 ```{r}
 library(tidyverse)
