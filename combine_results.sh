@@ -45,23 +45,3 @@ done
 echo "Merged content saved to $merged_file"
 
 
-#######################
-#Organizing the seqence data
-########################
-#1.grep the needed DVG ID 
-
-cat PL2_DI_fasta.fa | grep "DVG_336_" > name.list
-
-#2. remove the > sign from the list in name.list file
-
-#3. extract the sequnces based on the spesific ID in the file using seqtk
-
-module load seqtk 
-
-seqtk subseq PL2_DI_fasta.fa name.list > DVG_336_PL.fa
-
-
-
-
-
-
