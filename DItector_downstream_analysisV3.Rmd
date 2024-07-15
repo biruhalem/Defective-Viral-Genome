@@ -1,5 +1,5 @@
 ---
-title: "DVG analysis V2"
+title: "cbDVG downstream analysis"
 author: "Dr Biruhalem"
 date: "2023-12-11"
 output: html_document
@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
+#loading R packages libraries 
 
 ```{r}
 library(tidyverse)
@@ -26,7 +26,7 @@ library(gridExtra)
 ```{r}
 #importing raw data 
 
-dvg <- read.csv("D:/SSPE_raw.fatsq_files/DI-tector/merged_output_V2_all.csv") 
+dvg <- read.csv("D:/SSPE_raw.fatsq_files/DI-tector/merged_output_V2_all.csv")  # merged_output.txt was saved as merged_output_V2_all.csv and loaded 
 
 head(dvg)
 
@@ -40,7 +40,6 @@ head(dvg)
 dvg <- dvg %>%
   mutate(strand = ifelse(BP_Pos - RI_Pos < 0, "minus", "plus"))
 
-# Assuming dvg is your data frame
 dvg <- dvg %>%
   mutate(
     reverse = sapply(1:nrow(dvg), function(i) {
@@ -82,11 +81,13 @@ table(dvg1$strand, dvg1$reverse)
 
 #save the file
 
-write.csv(dvg1, "C:/Users/m243773/Desktop/SSPE_DItector/DItector/dvg1.csv")
+write.csv(dvg1, "C:/Users/user/Desktop/SSPE_DItector/DItector/dvg1.csv")
 
 ```
 
-
+#---------------------------------------------------------------
+## Extracting 5'cbDVGs with rule of six and more than 100 copies 
+#---------------------------------------------------------------
 
 ```{r}
 dvg_filtered <- subset(dvg1, Rule_of_six == "YES" & total_count > 100)
@@ -96,11 +97,11 @@ dvg_filtered_cb <- subset(dvg_filtered, DVG.stype == "5'cb/sbDVG")
 
 dim(dvg_filtered_cb)
 
-write.csv(dvg_filtered_cb, "C:/Users/m243773/Desktop/SSPE_DItector/DItector/dvg_filtered_cb.csv")
+write.csv(dvg_filtered_cb, "C:/Users/user/Desktop/SSPE_DItector/DItector/dvg_filtered_cb.csv")
 
 ```
 
-#extracting the 366 DVGs for heatmap
+#extracting the 276 cbDVGs for heatmap
 
 
 ```{r}
@@ -118,7 +119,7 @@ head(pivot_df)
 
 
 ```{r}
-# Assuming dvg_filtered_cb is your data frame
+# 
 pivot_df <- dvg_filtered_cb %>%
   pivot_wider(
     id_cols = BP_Pos_RI_Pos,
@@ -131,550 +132,16 @@ pivot_df <- dvg_filtered_cb %>%
 # Print the result
 head(pivot_df)
 
-write.csv(pivot_df, "C:/Users/m243773/Desktop/SSPE_DItector/DItector/pivot_df.csv")
+write.csv(pivot_df, "C:/Users/user/Desktop/SSPE_DItector/DItector/pivot_df.csv")
 
 ```
 
-```{r}
-# Create DVG_ID column
-pivot_df$DVG_ID <- paste0("DVG_", pivot_df$Length, "_", pivot_df$BP_Pos_RI_Pos)
+#----------------------------
+# Scater plots for Figure 4B-H
+#--------------------------------
 
-# Reorder columns and exclude Length and BP_Pos_RI_Pos
-pivot_df <- pivot_df %>%
-  select(DVG_ID, !c(Length, BP_Pos_RI_Pos))
 
 
-# Print the result
-head(pivot_df)
 
 
-
-```
-
-# Log normalozation. This is not log transforamtion
-
-The log1p function in R is used to compute the natural logarithm of 
-It is particularly useful for accurately calculating the logarithm of small values close to zero. The natural logarithm is denoted as 
-
-
-```{r}
-# Assuming pivot_df is your data frame
-pivot_df_log <- pivot_df %>%
-  mutate(across(-DVG_ID, ~log1p(.)))
-
-head(pivot_df_log)
-
-
-colnames(pivot_df_log) <- sub("_counts_filtered", "", colnames(pivot_df_log))
-row_names <- pivot_df_log$DVG_ID
-
-head(pivot_df_log)
-
-
-write.csv(pivot_df_log, "C:/Users/m243773/Desktop/SSPE_DItector/DItector/pivot_df_log.csv")
-
-```
-
-
-
-```{r}
-# Assuming pivot_df_log is your data frame
-selected_rows <- pivot_df_log[rowSums(pivot_df_log[, -1] != 0, na.rm = TRUE) >= 2, ]
-
-# Print the selected data
-print(selected_rows)
-dim(selected_rows)
-
-write.csv(selected_rows, "C:/Users/m243773/Desktop/SSPE_DItector/DItector/selected_rows.csv")
-
-```
-#shared with 3 samples 
-
-
-```{r}
-# Assuming pivot_df_log is your data frame
-sharedin3samples <- pivot_df_log[rowSums(pivot_df_log[, -1] != 0, na.rm = TRUE) >= 3, ]
-
-# Print the selected data
-print(sharedin3samples)
-dim(sharedin3samples)
-
-write.csv(sharedin3samples, "C:/Users/m243773/Desktop/SSPE_DItector/DItector/sharedin3samples.csv")
-```
-
-
-
-#heatmap with 
-
-```{r}
-
-
-
-```
-
-
-
-
-
-# figures for whole adat 
-
-
-```{r}
-library(ggplot2)
-
-# Assuming dvg1 is your filtered data frame
-for (sample in unique(dvg1$Samples)) {
-  plot_data <- subset(dvg1, Samples == sample)
-  
-  x_range <- range(plot_data$BP_Pos)
-  y_range <- range(plot_data$RI_Pos)
-  
-  p <- ggplot(plot_data, aes(x = BP_Pos, y = RI_Pos, color = `DVG.stype`, size = total_count)) +
-    geom_point(alpha = 0.7) +
-    labs(title = paste("Scatter Plot of BP_Pos vs RI_Pos for Sample", sample),
-         x = "BP_Pos",
-         y = "RI_Pos",
-         size = "Total Count",
-         color = "DVG.stype") +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    coord_cartesian(xlim = x_range, ylim = y_range)  # Set axis limits dynamically
-  
-  # Save each plot as a separate file (e.g., PDF)
-  ggsave(paste0("scatter_plot_", gsub("/", "_", sample), ".pdf"), p)
-}
-
-```
-
-
-
-```{r}
-write.csv(dvg_filtered_cb, "C:/Users/m243773/Desktop/SSPE_DItector/DItector/dvg_filtered_cb.csv")
-```
-
-
-#plot for all clean data (dvg1)
-
-
-```{r}
-cb_data <- read.csv("C:/Users/m243773/Desktop/SSPE_DItector/DItector/dvg_filtered_cb_v1.csv")
-head(cb_data)
-```
-
-
-
-```{r}
-
-# Assuming dvg_filtered is your filtered data frame
-pdf("cb_data.pdf")
-
-for (sample in unique(cb_data$Samples)) {
-  plot_data <- subset(cb_data, Samples == sample)
-  
-  # Find the range for both X and Y axes within each sample
-  x_range <- range(13800, 15894)
-  y_range <- range(15675, 15825)
-  
-  p_cb <- ggplot(plot_data, aes(x = BP_Pos, y = RI_Pos, size = total_count)) +
-    geom_point() +
-    labs(title = paste("DVG with rule of 6 and total count > 100", sample),
-         x = "BP_Pos",
-         y = "RI_Pos",
-         size = "Total Count") +
-    coord_cartesian(xlim = x_range, ylim = y_range)  # Set axis limits based on the range within the sample
-  
-  # Print the plot to the PDF device
-  print(p_cb)
-}
-```
-
-
-```{r}
-
-pdf("cb_data2.pdf")
-
-for (sample in unique(cb_data$Samples)) {
-  plot_data <- subset(cb_data, Samples == sample)
-  
-  # Find the range for both X and Y axes within each sample
-  x_range <- range(13800, 15894)
-  y_range <- range(15675, 15825)
-  
-  p_cb_2 <- ggplot(plot_data, aes(x = BP_Pos, y = RI_Pos, size = total_count)) +
-    geom_point() +
-    labs(title = paste("DVG with rule of 6 and total count > 100", sample),
-         x = "BP_Pos",
-         y = "RI_Pos",
-         size = "Total Count") +
-    coord_cartesian(xlim = x_range, ylim = y_range)  # Set axis limits based on the range within the sample
-  
-  # Print the plot to the PDF device
-  print(p_cb_2)
-}
-```
-
-
-
-
-```{r}
-library(ggplot2)
-
-# Assuming cb_data is your data frame
-pdf("cb_data2.pdf")
-
-# Find the overall minimum and maximum values of total_count across all samples
-overall_min_count <- min(cb_data$total_count)
-overall_max_count <- max(cb_data$total_count)
-
-for (sample in unique(cb_data$Samples)) {
-  plot_data <- subset(cb_data, Samples == sample)
-  
-  # Find the range for both X and Y axes within each sample
-  x_range <- range(13800, 15894)
-  y_range <- range(15675, 15825)
-  
-  # Use a size gradient for total_count with overall scale
-  p_cb_2 <- ggplot(plot_data, aes(x = BP_Pos, y = RI_Pos, size = total_count)) +
-    geom_point(alpha = 0.5) +
-    labs(title = paste("DVG with rule of 6 and total count > 100", sample),
-         x = "BP_Pos",
-         y = "RI_Pos",
-         size = "Total Count") +
-    coord_cartesian(xlim = x_range, ylim = y_range) +  # Set axis limits based on the range within the sample
-    scale_size_continuous(range = c(1, 10), limits = c(overall_min_count, overall_max_count), breaks = seq(overall_min_count, overall_max_count, length.out = 6),
-                          labels = scales::number_format(scale = 1))  # Round up to integers
-    
-  # Print the plot to the PDF device
-  print(p_cb_2)
-}
-
-# Close the PDF device
-dev.off()
-
-
-
-
-```
-
-```{r}
-library(ggplot2)
-library(RColorBrewer)
-
-# Assuming cb_data is your data frame
-pdf("cb_data3.pdf")
-
-# Find the overall minimum and maximum values of total_count across all samples
-overall_min_count <- min(cb_data$total_count)
-overall_max_count <- max(cb_data$total_count)
-
-# Define the DVG_IDs you want to highlight
-highlighted_DVG_IDs <- c("DVG_336_15652_15802", "DVG_426_15570_15794", "DVG_324_15673_15793", "DVG_342_15654_15794", "DVG_342_15655_15793", "DVG_1224_14822_15744", "DVG_1974_14081_15744")
-
-# Create a color palette for the DVG_IDs
-num_highlighted <- length(highlighted_DVG_IDs)
-palette <- brewer.pal(n = num_highlighted, name = "Set1")
-
-# Create a mapping of DVG_IDs to consistent colors
-consistent_colors <- setNames(palette, highlighted_DVG_IDs)
-
-for (sample in unique(cb_data$Samples)) {
-  plot_data <- subset(cb_data, Samples == sample)
-  
-  # Find the range for both X and Y axes within each sample
-  x_range <- range(13800, 15894)
-  y_range <- range(15675, 15825)
-  
-  # Use a size gradient for total_count with overall scale
-  p_cb_2 <- ggplot(plot_data, aes(x = BP_Pos, y = RI_Pos, size = total_count, color = DVG_ID)) +
-    geom_point(alpha = 0.5) +
-    labs(title = paste("DVG with rule of 6 and total count > 100", sample),
-         x = "BP_Pos",
-         y = "RI_Pos",
-         size = "Total Count",
-         color = "DVG_ID") +
-    coord_fixed(ratio = 0.5) +  # Adjust the aspect ratio here (you may need to experiment with the ratio value)
-    scale_size_continuous(range = c(1, 10), limits = c(overall_min_count, overall_max_count), breaks = seq(overall_min_count, overall_max_count, length.out = 6),
-                          labels = scales::number_format(scale = 1)) +  # Round up to integers
-    scale_color_manual(values = consistent_colors) +  # Assign consistent colors based on DVG_ID
-    coord_cartesian(xlim = x_range, ylim = y_range) +  # Set axis limits based on the range within the sample
-    theme(axis.title.y = element_text(margin = margin(r = 10)))  # Adjust the margin of the Y-axis title
-  # Print the plot to the PDF device
-  print(p_cb_2)
-}
-
-# Close the PDF device
-dev.off()
-
-
-
-```
-
-
-```{r}
-# Assuming dvg_filtered is your filtered data frame
-pdf("combined_plots_filtered_all.pdf")
-
-for (sample in unique(dvg1$Samples)) {
-  plot_data <- subset(dvg1, Samples == sample)
-  
-  # Find the range for both X and Y axes within each sample
-  x_range <- range(plot_data$BP_Pos)
-  y_range <- range(plot_data$RI_Pos)
-  
-  p <- ggplot(plot_data, aes(x = BP_Pos, y = RI_Pos, color = `DVG.stype`, size = total_count)) +
-    geom_point() +
-    labs(title = paste("All DVG", sample),
-         x = "BP_Pos",
-         y = "RI_Pos",
-         size = "Total Count",
-         color = "DVG.stype") +
-    coord_cartesian(xlim = x_range, ylim = y_range)  # Set axis limits based on the range within the sample
-  
-  # Print the plot to the PDF device
-  print(p)
-}
-
-# Close the PDF device
-dev.off()
-
-```
-
-#plot for clean data with Rule of 6 and total count > 100
-
-```{r}
-# Assuming dvg_filtered is your filtered data frame
-pdf("combined_plots_filtered_ruleof6and100_1.pdf")
-
-for (sample in unique(dvg_filtered$Samples)) {
-  plot_data <- subset(dvg_filtered, Samples == sample)
-  
-  # Find the range for both X and Y axes within each sample
-  x_range <- range(plot_data$BP_Pos)
-  y_range <- range(plot_data$RI_Pos)
-  
-  p_R6_100 <- ggplot(plot_data, aes(x = BP_Pos, y = RI_Pos, color = `DVG.stype`, size = total_count)) +
-    geom_point() +
-    labs(title = paste("DVG with rule of 6 and total count > 100", sample),
-         x = "BP_Pos",
-         y = "RI_Pos",
-         size = "Total Count",
-         color = "DVG.stype") +
-    coord_cartesian(xlim = x_range, ylim = y_range)  # Set axis limits based on the range within the sample
-  
-  # Print the plot to the PDF device
-  print(p_R6_100)
-}
-
-# Close the PDF device
-dev.off()
-
-
-
-```
-
-```{r}
-# Assuming dvg_filtered is your filtered data frame
-pdf("combined_plots_filtered_ruleof6and100_v1.pdf")
-
-for (sample in unique(dvg_filtered$Samples)) {
-  plot_data <- subset(dvg_filtered, Samples == sample)
-  
-  # Find the maximum range for both BP_Pos and RI_Pos within each sample
-  x_range <- range(c(plot_data$BP_Pos, plot_data$RI_Pos))
-  y_range <- range(plot_data$total_count)
-  
-  p_R6_100_v1 <- ggplot(plot_data, aes(x = c(BP_Pos, RI_Pos), y = total_count, shape = c("triangle", "square"))) +
-    geom_point(size = 3) +
-    labs(title = paste("Scatter Plot of BP_Pos and RI_Pos vs Total Count for Sample", sample),
-         x = "BP_Pos and RI_Pos",
-         y = "Total Count") +
-    scale_shape_manual(values = c("triangle" = 17, "square" = 15)) +
-    coord_cartesian(xlim = x_range, ylim = y_range)  # Set axis limits based on the range within the sample
-  
-  # Print the plot to the PDF device
-  print(p_R6_100_v1)
-}
-
-# Close the PDF device
-dev.off()
-
-
-
-
-
-```
-
-
-
-
-
-
-```{r}
-# Assuming dvg_filtered is your filtered data frame
-for (sample in unique(dvg_filtered$Samples)) {
-  plot_data <- subset(dvg_filtered, Samples == sample)
-  
-  x_range <- range(plot_data$BP_Pos)
-  y_range <- range(plot_data$RI_Pos)
-  
-  p <- ggplot(plot_data, aes(x = BP_Pos, y = RI_Pos, color = `DVG.stype`, size = total_count)) +
-    geom_point(alpha = 0.7) +
-    labs(title = paste("Filtered Scatter Plot of BP_Pos vs RI_Pos for Sample", sample),
-         x = "BP_Pos",
-         y = "RI_Pos",
-         size = "Total Count",
-         color = "DVG.stype") +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    coord_cartesian(xlim = x_range, ylim = y_range)  # Set axis limits dynamically
-  
-  # Save each plot as a separate file (e.g., PDF)
-  ggsave(paste0("scatter_plot_", gsub("/", "_", sample), "_filtered.pdf"), p)
-}
-
-```
-In one PDF
-
-```{r}
-# Assuming dvg_filtered is your filtered data frame
-pdf("combined_plots_filtered.pdf")
-
-for (sample in unique(dvg_filtered$Samples)) {
-  plot_data <- subset(dvg_filtered, Samples == sample)
-  
-  x_range <- range(plot_data$BP_Pos)
-  y_range <- range(plot_data$RI_Pos)
-  
-  p <- ggplot(plot_data, aes(x = BP_Pos, y = RI_Pos, color = `DVG.stype`, size = total_count)) +
-    geom_point(alpha = 0.7) +
-    labs(title = paste("Filtered Scatter Plot of BP_Pos vs RI_Pos for Sample", sample),
-         x = "BP_Pos",
-         y = "RI_Pos",
-         size = "Total Count",
-         color = "DVG.stype") +
-    theme_minimal() +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      axis.line = element_line(size = 0.2, color = "black"),  # Set axis line properties
-      panel.grid.major = element_line(size = 0.2, color = "gray"),  # Set major grid line properties
-      panel.grid.minor = element_line(size = 0.2, color = "gray")  # Set minor grid line properties
-    ) +
-    coord_cartesian(xlim = x_range, ylim = y_range)  # Set axis limits dynamically
-  
-  # Print the plot to the PDF device
-  print(p)
-}
-
-# Close the PDF device
-dev.off()
-
-
-
-```
-```{r}
-# Assuming dvg_filtered is your filtered data frame
-pdf("combined_plots_filtered_v6.pdf")
-
-# Set a common range for Total Count size scale
-common_size_range <- c(0, 20000)
-
-for (sample in unique(dvg_filtered$Samples)) {
-  plot_data <- subset(dvg_filtered, Samples == sample)
-  
-  x_range <- range(plot_data$BP_Pos)
-  y_range <- range(plot_data$RI_Pos)
-  
-  p <- ggplot(plot_data, aes(x = BP_Pos, y = RI_Pos, color = `DVG.stype`, size = total_count)) +
-    geom_point(alpha = 0.7) +
-    labs(title = paste("Filtered Scatter Plot of BP_Pos vs RI_Pos for Sample", sample),
-         x = "BP_Pos",
-         y = "RI_Pos",
-         size = "Total Count",
-         color = "DVG.stype") +
-    theme_minimal() +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      axis.line = element_line(size = 1, color = "black"),  # Set axis line properties
-      panel.grid.major = element_line(size = 0.5, color = "black"),  # Set major grid line properties
-      panel.grid.minor = element_line(size = 0.2, color = "gray")  # Set minor grid line properties
-    ) +
-    coord_cartesian(xlim = x_range, ylim = y_range) +  # Set axis limits dynamically
-    scale_size_continuous(range = common_size_range)
-  
-  # Print the plot to the PDF device
-  print(p)
-}
-
-# Close the PDF device
-dev.off()
-
-
-
-```
-```{r}
-df <- data.frame(x = runif(20), y = runif(20), z = sample(20))
-base <- ggplot(df, aes(x, y, size = z)) + geom_point()
-
-base 
-
-```
-
-
-```{r}
-# Assuming dvg_filtered is your filtered data frame
-pdf("combined_plots_filtered_a.pdf")
-
-for (sample in unique(dvg_filtered$Samples)) {
-  plot_data <- subset(dvg_filtered, Samples == sample)
-  
-  x_range <- range(plot_data$BP_Pos)
-  y_range <- range(plot_data$RI_Pos)
-  
-  p <- ggplot(plot_data, aes(x = BP_Pos, y = RI_Pos, color = `DVG.stype`, size = total_count)) +
-    geom_point() +
-    labs(title = paste("Filtered Scatter Plot of BP_Pos vs RI_Pos for Sample", sample),
-         x = "BP_Pos",
-         y = "RI_Pos",
-         size = "Total Count",
-         color = "DVG.stype") +
-    coord_cartesian(xlim = x_range, ylim = y_range)  # Set axis limits dynamically
-  
-  # Print the plot to the PDF device
-  print(p)
-}
-
-# Close the PDF device
-dev.off()
-
-
-```
-```{r}
-# Assuming dvg_filtered is your filtered data frame
-pdf("combined_plots_filtered_a.pdf")
-
-for (sample in unique(dvg_filtered$Samples)) {
-  plot_data <- subset(dvg_filtered, Samples == sample)
-  
-  # Find the range for both X and Y axes within each sample
-  x_range <- range(plot_data$BP_Pos)
-  y_range <- range(plot_data$RI_Pos)
-  
-  p <- ggplot(plot_data, aes(x = BP_Pos, y = RI_Pos, color = `DVG.stype`, size = total_count)) +
-    geom_point() +
-    labs(title = paste("Filtered Scatter Plot of BP_Pos vs RI_Pos for Sample", sample),
-         x = "BP_Pos",
-         y = "RI_Pos",
-         size = "Total Count",
-         color = "DVG.stype") +
-    coord_cartesian(xlim = x_range, ylim = y_range)  # Set axis limits based on the range within the sample
-  
-  # Print the plot to the PDF device
-  print(p)
-}
-
-# Close the PDF device
-dev.off()
-
-
-```
 
