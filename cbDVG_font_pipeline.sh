@@ -45,14 +45,14 @@ for fq in "${output_dir}"/*.dna.fastq; do
 done
 
 # Step 4: Mapping to Reference Genome
-GENOME_DIR="/mnt/c/Users/m243773/Desktop/SSPE_nanopore-20240718T172551Z-001"
+GENOME_DIR="/mnt/c/Users/.../Desktop/SSPE_nanopore-20240718T172551Z-001"
 GENOME_REF="MVSSPE_ancestor.fa.fasta"
 for fq in "${output_dir}"/*_quality.dna.fastq; do
   basename=$(basename "$fq" _quality.dna.fastq)
   sam_output="${output_dir}/${basename}.sam"
   sorted_bam_output="${output_dir}/${basename}.sorted.bam"
   rm -f "$sam_output" "$sorted_bam_output" # Remove old files if they exist
-  /mnt/c/Users/m243773/Desktop/SSPE_nanopore-20240718T172551Z-001/minimap2/minimap2 -ax map-ont "$GENOME_DIR/$GENOME_REF" "$fq" > "$sam_output"
+  /mnt/c/Users/.../Desktop/SSPE_nanopore-20240718T172551Z-001/minimap2/minimap2 -ax map-ont "$GENOME_DIR/$GENOME_REF" "$fq" > "$sam_output"
   samtools view -bS -F 4 "$sam_output" | samtools sort -o "$sorted_bam_output"
   samtools index "$sorted_bam_output"
   rm "$sam_output"
