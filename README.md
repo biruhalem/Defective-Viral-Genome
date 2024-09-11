@@ -11,7 +11,7 @@ DItector_downstream_analysisV3.Rmd :  This script perform the downstream analysi
 
 plots.py : Scripts for volcano plot, GO biological process heatmap (fig 6 A and B), and a script that generate sequnces for WebLogo analysis and WebLogo plot (Fig 4I)
 
-cbDVG_forONT_pipeline.sh: a new method for the detection of cbDVGs in Oxford Nanopore Technologies (ONT) sequencing Fastq data.
+cbDVG_forONT_pipeline.sh: a new method/pipeline for the detection of cbDVGs in Oxford Nanopore Technologies (ONT) sequencing Fastq data.
 
 
 
