@@ -6,7 +6,7 @@ directories=("SSPE_ONT_20240827T132846Z-001/Occ/fastq_pass"
              "SSPE_ONT_20240827T132846Z-001/Temp/fastq_pass")
 
 # Output directory for combined files
-output_dir="combined_files300"
+output_dir="combined_files"
 mkdir -p "$output_dir"
 
 # Clean up any previous files in the output directory
@@ -35,7 +35,7 @@ done
 
 # Step 3: Quality Trimming and Filtering
 QUALITY_THRESHOLD=10
-MIN_LENGTH=300
+MIN_LENGTH=99
 for fq in "${output_dir}"/*.dna.fastq; do
   basename=$(basename "$fq" .dna.fastq)
   output_file="${output_dir}/${basename}_quality.dna.fastq"
