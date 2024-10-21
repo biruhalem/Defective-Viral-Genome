@@ -1,5 +1,5 @@
 # Copy back defective viral genome (cbDVG) analysis 
-Here we provide codes and parameters used in the analysis of measles virus copy back defective viral genome in SSPE brain in the paper: 
+Here we provide codes and parameters used in a publication DOI: https://doi.org/10.1128/jvi.01232-24: 
 
 # A measles virus collective infectious unit that caused lethal human brain disease includes many locally restricted and few widespread copy-back defective genomes 
 
